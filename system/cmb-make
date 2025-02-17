@@ -24,9 +24,9 @@ usage() {
 }
 
 export CM_VERBOSE
-CM_VERBOSE=false
+CM_VERBOSE=true
 
-SML=sml
+SML=../bin/sml
 ARGS=""
 # Process command-line arguments
 #

@@ -95,6 +95,88 @@ structure Control_CG : CGCONTROL =
     val debugSpillInfo = new (b, "debug_cps_spill_info", "enable CPS spill info", false)
   end (* structure Control_CG *)
 
+structure Control_NC : NEW_CLOSURE_CONTROL =
+  struct
+    val priority = [10, 11, 2]
+    val obscurity = 6
+    val prefix = "nc"
+
+    val registry =
+      ControlRegistry.new { help = "new closure converter settings" }
+
+    val _ = BasicControl.nest (prefix, registry, priority)
+
+    val b = ControlUtil.Cvt.bool
+    val i = ControlUtil.Cvt.int
+    val r = ControlUtil.Cvt.real
+    val sl = ControlUtil.Cvt.stringList
+
+    val nextpri = ref 0
+    fun new (c, n, h, d) = let
+	  val r = ref d
+	  val p = !nextpri
+	  val ctl = Controls.control {
+		  name = n,
+		  pri = [p],
+		  obscurity = obscurity,
+		  help = h,
+		  ctl = r }
+	  in
+	    nextpri := p + 1;
+	    ControlRegistry.register
+		registry
+		{ ctl = Controls.stringControl c ctl,
+		  envName = SOME (ControlUtil.EnvName.toUpper "CG_" n) };
+	    r
+	  end
+
+    val enable = new (b, "enable", "enable new closure converter", true)
+
+    val flatClosure = new (b, "flat-closure", "use flat closure policy", false)
+
+    val flattenPolicy =
+      new (i, "flatten-policy", "select policy for closure flattening", 1)
+    val flattenLiberally =
+      new (b, "flatten-liberally",
+              "use max to resolve arity among functions in the same web", true)
+    val flattenSelfRef =
+      new (b, "flatten-selfref",
+              "whether to flatten self-referential environments", true)
+    val flattenRegLimit =
+      new (b, "flatten-reg-limit",
+              "whether to impose register limit for known function environment \
+              \passing", true)
+
+    val sharingPolicy =
+      new (i, "sharing-policy",
+              "which sharing analysis to use", 1)
+    val sharingDistCutOff =
+      new (i, "sharing-dist-cutoff",
+              "maximum difference of binding time among variables in a shared \
+              \closure", 1)
+
+    val sharingSizeCutOff =
+      new (i, "sharing-size-cutoff",
+              "minimum size of a shared closure", 4)
+
+    val sharingUseCutOff =
+      new (i, "sharing-use-cutoff",
+              "minimum number of times by which a shared closure has to be \
+              \shared", 2)
+
+    val sharingNoThinning =
+      new (b, "sharing-no-thinning",
+              "whether to turn off thinning in the same closure", false)
+
+    val instrument =
+      new (b, "instrumentation",
+              "insert counting instrumentation code", false)
+
+    val dumpWeb = new (b, "dump-web", "dump call web", false)
+    val dumpDecision = new (b, "dump-decision", "dump decision", false)
+    val warnPath = 
+      new (b, "warn-path", "emit warning for long access paths", false)
+  end (* structure NewClosureControl *)
 
 structure Control : CONTROL =
   struct
@@ -154,6 +236,8 @@ structure Control : CONTROL =
     structure FLINT = FLINT_Control (* FLINT/main/control.{sml,sig} *)
 
     structure CG : CGCONTROL = Control_CG
+
+    structure NC : NEW_CLOSURE_CONTROL = Control_NC
 
     open BasicControl
     (* provides: val printWarnings = ref true *)

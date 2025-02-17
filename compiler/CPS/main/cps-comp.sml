@@ -36,6 +36,7 @@ functor CPSCompFn (MachSpec : MACH_SPEC) : CPS_COMP = struct
     structure CPStrans = CPStrans(MachSpec)
     structure CPSopt = CPSopt(MachSpec)
     structure Closure = Closure(MachSpec)
+    structure CFAClosure = CFAClosure(MachSpec)
     structure Spill = SpillFn(MachSpec)
 
     structure CPStoCFG = CPStoCFGFn (MachSpec)
@@ -46,6 +47,12 @@ functor CPSCompFn (MachSpec : MACH_SPEC) : CPS_COMP = struct
     val say = Control.Print.say
 
     fun phase x = Stats.doPhase (Stats.makePhase x)
+
+    fun closeCPS cps =
+      if !Control.NC.enable then
+        CFAClosure.closeCPS cps
+      else
+        Closure.closeCPS cps
 
     val convert   = phase "CPS 060 convert" Convert.convert
     val cpstrans  = phase "CPS 065 cpstrans" CPStrans.cpstrans

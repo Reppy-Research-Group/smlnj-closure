@@ -1,0 +1,42 @@
+[x] Flow analysis
+    Check MKSpecial
+
+[x] Web
+    WebID --> { defs: Functions, uses: Variables, unknown: bool }
+    Variables --> WebID
+    Functions --> WebID
+
+[x] Groups --- (real) mutually recursive functions form a group
+    A group is a unit of closure decision
+
+[x] Decision representation
+    <H, Clos, Alloc>
+
+[x] Decision invariant checker
+
+[x] Transformation: decision representation, invariant checker
+
+[ ] Comments
+
+[ ] Decision rewriting
+
+    [ ] Flattening: Web
+        [ ] Webs that don't close over themselves.
+        [ ] Webs that do.
+
+    [ ] Sharing: Shareable chain, *unchanging variable analysis
+
+[ ] Shareable chain
+
+[ ] Unchanging variable analysis
+
+
+Unexplored paths:
+
+- Global cost function:
+    Take the current closure decision and cps, evaluate the cost
+
+- Sharing as a live range splitting problem:
+    A variable may be introduced at a function and not used until much later,
+    but it has to be carried around, moved from a closure to another.
+    Can ``spill'' these.

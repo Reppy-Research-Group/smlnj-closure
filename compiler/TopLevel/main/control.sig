@@ -55,6 +55,30 @@ signature CGCONTROL =
     val debugSpillInfo : bool ref
   end (* signature CGCONTROL *)
 
+signature NEW_CLOSURE_CONTROL =
+  sig
+    val enable : bool ref
+
+    val flatClosure : bool ref
+
+    val flattenPolicy    : int ref
+    val flattenLiberally : bool ref
+    val flattenSelfRef   : bool ref
+    val flattenRegLimit  : bool ref
+
+    val sharingPolicy     : int ref
+    val sharingDistCutOff : int ref
+    val sharingSizeCutOff : int ref
+    val sharingUseCutOff  : int ref
+    val sharingNoThinning : bool ref
+
+    val instrument   : bool ref
+
+    val dumpWeb      : bool ref
+    val dumpDecision : bool ref
+    val warnPath     : bool ref
+  end (* signature NEWCLOSURE *)
+
 (* main Control structure *)
 signature CONTROL =
   sig
@@ -64,6 +88,7 @@ signature CONTROL =
     structure MC : MC_CONTROL  (* match compiler controls *)
     structure FLINT : FLINTCONTROL
     structure CG : CGCONTROL
+    structure NC : NEW_CLOSURE_CONTROL
     val debugging : bool ref
     val eldebugging : bool ref (* EvalLoopF debugging *)
     val pddebugging : bool ref (* PPDec debugging *)
