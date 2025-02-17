@@ -441,16 +441,16 @@ structure SharingAnalysis2 :>
                       foldl (fn ((_, Pack { fv, ... }), (c, u)) =>
                         (LV.Set.difference (c, fv), LV.Set.difference (u, fv))
                       ) (computeFV, unusedFV) packs
-                    val compute = LV.Set.listItems compute
+                    (* val compute = LV.Set.listItems compute *)
                     val unused  = LV.Set.listItems unused
-                in  (map (fn v => (v, defDepth v)) compute,
+                in  (compute,
                      map (fn v => (v, defDepth v)) unused)
                 end
 
               val currDepth = S.depthOf syn (List.hd functions)
 
               val (packs, looseUnusedAndCompute) =
-                let val loose = sortBy #2 (remainingUnused @ remainingCompute)
+                let val loose = sortBy #2 remainingUnused
                     fun findCandidatePacks (vs, fstDepth, currPack, packs) =
                       (case vs
                          of [] => currPack :: packs
@@ -496,7 +496,7 @@ structure SharingAnalysis2 :>
 
               val loose = LV.Set.union (
                 LV.Set.fromList (map #1 looseUnusedAndCompute),
-                loopFV
+                LV.Set.union (remainingCompute, loopFV)
               )
 
               val result = Pack {
