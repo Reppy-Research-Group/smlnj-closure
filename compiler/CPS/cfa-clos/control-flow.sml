@@ -34,7 +34,8 @@ structure ControlFlow :> sig
   type funtbl = block LabelledCPS.FunTbl.hash_table
   type looptbl = loop_info Graph.NodeTbl.hash_table
 
-  type loopvartbl = (LV.Set.set * Graph.node list) Graph.NodeTbl.hash_table
+  type loopvartbl =
+    (LambdaVar.Set.set * Graph.node list) Graph.NodeTbl.hash_table
 
   val analyze : LabelledCPS.function * SyntacticInfo.t * FlowCFA.result
               -> funtbl * looptbl * loopvartbl
@@ -754,6 +755,9 @@ end = struct
       end
   end
 
+  type loopvartbl =
+    (LV.Set.set * Graph.node list) Graph.NodeTbl.hash_table
+
   fun analyzeLoopVars (
     looptbl: looptbl
   ) : loopvartbl =
@@ -778,9 +782,9 @@ end = struct
                         loopvars (header, (LV.Set.empty, [inner])))
         fun addNode (node, { header, ty, ... }: loop_info) =
           (case (node, ty)
-             of (Graph.Start _, CF.NonHeader) => ()
+             of (Graph.Start _, NonHeader) => ()
               | (Graph.Start _, _) => ()
-              | (Graph.Node (Block { uses, ... }), CF.NonHeader) =>
+              | (Graph.Node (Block { uses, ... }), NonHeader) =>
                   addUses (header, uses)
               | (Graph.Node (Block { uses, ... }), _) => (* all are headers *)
                   (addUses (node, uses); addInner (header, node)))

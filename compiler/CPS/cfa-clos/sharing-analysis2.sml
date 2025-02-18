@@ -209,7 +209,7 @@ structure SharingAnalysis2 :>
     syn: S.t,
     funtbl: CF.funtbl,
     looptbl: CF.looptbl,
-    loopvars: loopvartbl
+    loopvars: CF.loopvartbl
   ) =
     let open ControlFlow
         val sizeCutoff = !Config.sharingSizeCutOff
@@ -645,10 +645,10 @@ structure SharingAnalysis2 :>
     syn: S.t,
     funtbl: CF.funtbl,
     looptbl: CF.looptbl,
-    loopvartbl: CF.loopvartbl,
+    loopvartbl: CF.loopvartbl
   ) : pack Group.Tbl.hash_table * pack PackID.Tbl.hash_table =
     let val (grpTbl, packTbl, replaceTbl, pinnedTbl) =
-          preference (cps, syn, funtbl, looptbl, loopvars)
+          preference (cps, syn, funtbl, looptbl, loopvartbl)
         val () = prune (grpTbl, packTbl, replaceTbl)
         val () =
           if !Config.sharingNoThinning then
