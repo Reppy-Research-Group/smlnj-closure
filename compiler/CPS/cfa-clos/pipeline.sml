@@ -39,6 +39,17 @@ end = struct
     | numfp (m,x::z) = if isFltCty(x) then numfp(m-1,z) else numfp(m,z)
     | numfp (m,[]) = m
 
+  fun countReg slots =
+    let fun go ([], ngp, nfp) = (ngp, nfp)
+          | go (D.Var (_, ty) :: ss, ngp, nfp) =
+              if isFltCty ty then
+                go (ss, ngp, nfp + 1)
+              else
+                go (ss, ngp + 1, nfp)
+          | go (_ :: ss, ngp, nfp) = go (ss, ngp + 1, nfp)
+    in  go (slots, 0, 0)
+    end
+
   fun argmin f [] = raise Empty
     | argmin f (x :: xs) =
         let fun go ([], arg, min) = arg
@@ -1166,19 +1177,19 @@ end = struct
                   raise Fail "unboxing non direct function"
                 else
                   ()
-              (* val avail = numgp(maxgpregs, #4 f) *)
+              val avail = numgp(maxgpregs, #4 f)
+              val (ngp, nfp) = countReg slots
               (* val e1 = allocate (heap, f, e, avail, availEnvs) *)
               (* val heap = EnvID.Map.insert (heap, e, D.Record ([], false)) *)
               (* val e2 = (D.Flat slots, heap) *)
-              val numArgCutOff = maxgpregs + maxfpregs
-              val nargs = List.length (#3 f)
-          in  if !Config.flattenRegLimit andalso
-                 List.length slots + nargs <= numArgCutOff then
+              (* val numArgCutOff = maxgpregs + maxfpregs *)
+              (* val nargs = List.length (#3 f) *)
+          in  if !Config.flattenRegLimit andalso ngp <= avail then
                 let val heap = EnvID.Map.insert (heap, e, D.Record ([], false))
                 in  (D.Flat slots, heap)
                 end
               else
-                allocate (heap, f, e, numArgCutOff - nargs, availEnvs)
+                allocate (heap, f, e, avail + nfp, availEnvs)
           end
         (* Environments now look like one of the following:
          * 1. Boxed e

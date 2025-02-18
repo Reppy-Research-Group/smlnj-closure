@@ -193,7 +193,7 @@ end = struct
             end
         fun getWebBandwidth w =
           let val { defs, ... } = W.content (web, w)
-          in  if directCall defs then
+          in  if not (!Config.flattenRegLimit) andalso directCall defs then
                 Unlimited
               else
                 let fun bw (_, _, _, tys, _) = numgp (maxgpregs - 2, tys)
