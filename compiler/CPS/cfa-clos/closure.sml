@@ -71,14 +71,16 @@ functor CFAClosure(MachSpec : MACH_SPEC) : CLOSURE = struct
       val () = if !Config.dumpWeb then Web.dump web else ()
 
       (* val () = Lifetime.analyze (lcps, syntactic) *)
-      val (funtbl, looptbl) =
+      val (funtbl, looptbl, loopvars) =
         timeit "control-flow" ControlFlow.analyze (lcps, syntactic, result)
       val shr =
         (case !Config.sharingPolicy
            of 1 =>
-                timeit "sharing" SharingAnalysis.analyze (lcps, syntactic, funtbl, looptbl)
+                timeit "sharing" SharingAnalysis.analyze (lcps, syntactic,
+                funtbl, looptbl, loopvars)
             | 2 =>
-                timeit "sharing" SharingAnalysis2.analyze (lcps, syntactic, funtbl, looptbl)
+                timeit "sharing" SharingAnalysis2.analyze (lcps, syntactic,
+                funtbl, looptbl, loopvars)
             | _ =>
                 raise Fail "sharingPolicy: choose 1 or 2")
 

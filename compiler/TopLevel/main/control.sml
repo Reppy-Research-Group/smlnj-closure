@@ -149,20 +149,20 @@ structure Control_NC : NEW_CLOSURE_CONTROL =
 
     val sharingPolicy =
       new (i, "sharing-policy",
-              "which sharing analysis to use", 1)
+              "which sharing analysis to use", 2)
     val sharingDistCutOff =
       new (i, "sharing-dist-cutoff",
               "maximum difference of binding time among variables in a shared \
-              \closure", 1)
+              \closure", 4)
 
     val sharingSizeCutOff =
       new (i, "sharing-size-cutoff",
-              "minimum size of a shared closure", 4)
+              "minimum size of a shared closure", 6)
 
     val sharingUseCutOff =
       new (i, "sharing-use-cutoff",
               "minimum number of times by which a shared closure has to be \
-              \shared", 2)
+              \shared", 4)
 
     val sharingNoThinning =
       new (b, "sharing-no-thinning",

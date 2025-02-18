@@ -790,23 +790,37 @@ end = struct
     in  D.T { allo=allo, heap=heap, repr=repr }
     end
 
-  fun mergePref ((lvl1, prob1: real), (lvl2, prob2: real)) =
+  fun mergePref ((inloop1, lvl1, prob1: real), (inloop2, lvl2, prob2: real)) =
     let val lvl = Int.max (lvl1, lvl2)
         (* val lvl = lvl1 + lvl2 *)
         val prob = prob1 + prob2
-    in  (lvl, prob)
+    in  (inloop1 orelse inloop2, lvl, prob)
     end
 
   fun getPreference (
     looptbl: CF.looptbl,
     funtbl: CF.funtbl,
+    loopvars : CF.loopvartbl,
     syn: S.t,
     f: LCPS.function
-  ) : (int * real) LV.Map.map =
+  ) : (bool * int * real) LV.Map.map =
     let fun lookupBlock b = CF.Graph.NodeTbl.lookup looptbl (CF.Graph.Node b)
-        fun preference entry : (int * real) LV.Map.map =
+        fun getloopvar block =
+          let val node = Graph.Node block
+              val { header=loophdr, ty=ty, ... } =
+                Graph.NodeTbl.lookup looptbl (Graph.Node block)
+              val (loopvars, _) =
+                (case (loophdr, ty)
+                   of (Graph.Start _, CF.NonHeader) => (LV.Set.empty, [])
+                    | (_, CF.NonHeader) => Graph.NodeTbl.lookup loopvars loophdr
+                    | _ => Graph.NodeTbl.lookup loopvars node)
+          in  loopvars
+          end
+        fun preference entry : (bool * int * real) LV.Map.map =
           let fun getProb (NONE, n) = 1.0 / Real.fromInt n
                 | getProb (SOME p, _) = Prob.toReal p
+              val loopvars = getloopvar entry
+              fun isLoopVar v = LV.Set.member (loopvars, v)
               val insert = LV.Map.insertWith mergePref
               val union = LV.Map.unionWith mergePref
               fun build (b as CF.Block { term, uses, fix, ... }, prob) =
@@ -816,7 +830,7 @@ end = struct
                                         LV.Map.listKeys (S.groupFV syn grp))
                       ) uses fix
                     val pref = LV.Set.foldl (fn (v, pref) =>
-                        insert (pref, v, (nestingDepth, prob))
+                        insert (pref, v, (isLoopVar v, nestingDepth, prob))
                       ) LV.Map.empty augUses
                 in  case term
                       of CF.Branch (_, _, b1, b2, p) =>
@@ -837,11 +851,12 @@ end = struct
                 end
           in  build (entry, 1.0)
           end
-    in  preference (LCPS.FunTbl.lookup funtbl f)
+        val entry = LCPS.FunTbl.lookup funtbl f
+    in  preference entry
     end
 
   fun pickNSlots (pref, heap, slots, n) : D.slot list * D.slot list =
-    let val botPref = (~1, ~1.0)
+    let val botPref = (false, ~1, ~1.0)
         fun slotPref (slot, heap, pref) =
           (case slot
              of D.EnvID e =>
@@ -878,11 +893,18 @@ end = struct
         fun pick (pref, heap, slots, n) : D.slot list * D.slot list =
           let val slotsWithPref =
                 map (fn s => (s, slotPref (s, heap, pref))) slots
-              fun gt ((v, (lvl1, prob1)), (w, (lvl2, prob2))) =
-                if sameProb (prob1, prob2) then
-                  lvl1 < lvl2
-                else
-                  prob1 < prob2
+              fun gt ((v, (inloop1, lvl1, prob1)), (w, (inloop2, lvl2, prob2)))=
+                let fun breakTie () =
+                      if sameProb (prob1, prob2) then
+                        lvl1 < lvl2
+                      else
+                        prob1 < prob2
+                in case (inloop1, inloop2)
+                     of (true, true)   => breakTie ()
+                      | (true, false)  => false
+                      | (false, true)  => true
+                      | (false, false) => breakTie ()
+                end
               (* fun gt ((v, (lvl1, prob1)), (w, (lvl2, prob2))) = *)
               (*   if lvl1 = lvl2 then *)
               (*     prob1 < prob2 *)
